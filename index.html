@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>万丽显卡智能客服 - 小丽为您服务</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user-message {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .bot-avatar {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            position: relative;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-message .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .user-message .message-time {
+            text-align: right;
+        }
+
+        .bot-message .message-time {
+            text-align: left;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            border: 1px solid #e0e0e0;
+            max-width: 70%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            padding: 8px;
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #667eea;
+            background: white;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 12px 16px;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .chat-input::placeholder {
+            color: #999;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .clear-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .clear-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .message-actions {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .message-content:hover .message-actions {
+            opacity: 1;
+        }
+
+        .message-actions:hover {
+            background: #f0f0f0;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .welcome-message h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .welcome-message p {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .quick-question {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .quick-question:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+                margin: 0;
+            }
+
+            .chat-header h1 {
+                font-size: 1.3rem;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .chat-input-container {
+                padding: 15px;
+            }
+
+            .clear-button {
+                top: 15px;
+                left: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+
+            .chat-header {
+                padding: 15px;
+            }
+
+            .chat-messages {
+                padding: 15px;
+            }
+
+            .message-content {
+                max-width: 90%;
+            }
+        }
+
+        /* 错误消息样式 */
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        /* 成功消息样式 */
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <button class="clear-button" onclick="clearChat()" title="清空聊天">
+                <i class="fas fa-trash"></i>
+            </button>
+            <h1><i class="fas fa-robot"></i> 万丽显卡智能客服</h1>
+            <p>我是小丽，为您提供专业的显卡咨询服务</p>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>在线</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message">
+                <div class="avatar bot-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <div class="welcome-message">
+                            <h3>👋 您好！我是小丽</h3>
+                            <p>我是万丽显卡的专业客服助手，很高兴为您服务！</p>
+                            <p>我可以为您提供以下服务：</p>
+                            <ul style="text-align: left; margin: 10px 0;">
+                                <li>📋 产品参数查询</li>
+                                <li>⚡ 性能对比分析</li>
+                                <li>💰 价格咨询</li>
+                                <li>🛠️ 技术支持</li>
+                                <li>📦 购买建议</li>
+                            </ul>
+                            <div class="quick-questions">
+                                <div class="quick-question" onclick="askQuickQuestion('RTX 5080的性能怎么样？')">RTX 5080性能</div>
+                                <div class="quick-question" onclick="askQuickQuestion('RTX 5060和5070 Ti有什么区别？')">性能对比</div>
+                                <div class="quick-question" onclick="askQuickQuestion('万丽显卡的保修政策是什么？')">保修政策</div>
+                                <div class="quick-question" onclick="askQuickQuestion('如何选择合适的显卡？')">购买建议</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="message-time" id="welcome-time"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="input-wrapper">
+                <input type="text" class="chat-input" id="chat-input" placeholder="请输入您的问题..." maxlength="500">
+                <button class="send-button" onclick="sendMessage()" id="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isTyping = false;
+
+        // 初始化时间
+        document.getElementById('welcome-time').textContent = getCurrentTime();
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function createMessage(content, isUser = false, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const avatarClass = isUser ? 'user-avatar' : 'bot-avatar';
+            const avatarIcon = isUser ? 'fas fa-user' : 'fas fa-robot';
+            
+            let bubbleClass = 'message-bubble';
+            if (isError) bubbleClass += ' error-message';
+            
+            messageDiv.innerHTML = `
+                <div class="avatar ${avatarClass}">
+                    <i class="${avatarIcon}"></i>
+                </div>
+                <div class="message-content">
+                    <div class="${bubbleClass}">${content}</div>
+                    <div class="message-time">${getCurrentTime()}</div>
+                    ${!isUser ? '<div class="message-actions" onclick="copyMessage(this)" title="复制消息"><i class="fas fa-copy"></i></div>' : ''}
+                </div>
+            `;
+            
+            return messageDiv;
+        }
+
+        function createTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="avatar bot-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            return typingDiv;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            const question = input.value.trim();
+            
+            if (!question || isTyping) return;
+
+            // 添加用户消息
+            const chatMessages = document.getElementById('chat-messages');
+            const userMessage = createMessage(question, true);
+            chatMessages.appendChild(userMessage);
+            
+            // 清空输入框并禁用发送按钮
+            input.value = '';
+            sendButton.disabled = true;
+            isTyping = true;
+            
+            // 滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // 显示输入指示器
+            const typingIndicator = createTypingIndicator();
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // 发送请求
+            fetch('http://127.0.0.1:5000/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络请求失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 移除输入指示器
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+
+                // 添加机器人回复
+                const botMessage = createMessage(data.answer);
+                chatMessages.appendChild(botMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // 移除输入指示器
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+
+                // 显示错误消息
+                const errorMessage = createMessage('抱歉，服务暂时不可用，请稍后再试。', false, true);
+                chatMessages.appendChild(errorMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            })
+            .finally(() => {
+                // 重新启用发送按钮
+                sendButton.disabled = false;
+                isTyping = false;
+                input.focus();
+            });
+        }
+
+        function askQuickQuestion(question) {
+            const input = document.getElementById('chat-input');
+            input.value = question;
+            sendMessage();
+        }
+
+        function clearChat() {
+            if (confirm('确定要清空所有聊天记录吗？')) {
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.innerHTML = `
+                    <div class="message bot-message">
+                        <div class="avatar bot-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <div class="message-bubble">
+                                <div class="welcome-message">
+                                    <h3>👋 您好！我是小丽</h3>
+                                    <p>我是万丽显卡的专业客服助手，很高兴为您服务！</p>
+                                    <p>我可以为您提供以下服务：</p>
+                                    <ul style="text-align: left; margin: 10px 0;">
+                                        <li>📋 产品参数查询</li>
+                                        <li>⚡ 性能对比分析</li>
+                                        <li>💰 价格咨询</li>
+                                        <li>🛠️ 技术支持</li>
+                                        <li>📦 购买建议</li>
+                                    </ul>
+                                    <div class="quick-questions">
+                                        <div class="quick-question" onclick="askQuickQuestion('RTX 5080的性能怎么样？')">RTX 5080性能</div>
+                                        <div class="quick-question" onclick="askQuickQuestion('RTX 5060和5070 Ti有什么区别？')">性能对比</div>
+                                        <div class="quick-question" onclick="askQuickQuestion('万丽显卡的保修政策是什么？')">保修政策</div>
+                                        <div class="quick-question" onclick="askQuickQuestion('如何选择合适的显卡？')">购买建议</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="message-time">${getCurrentTime()}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function copyMessage(button) {
+            const messageContent = button.parentElement.querySelector('.message-bubble');
+            const text = messageContent.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // 显示复制成功提示
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.style.color = '#4CAF50';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.style.color = '#666';
+                }, 1000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动选择文本复制');
+            });
+        }
+
+        // 支持回车发送
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // 输入框自动聚焦
+        document.getElementById('chat-input').focus();
+
+        // 自动滚动到底部
+        const chatMessages = document.getElementById('chat-messages');
+        const observer = new MutationObserver(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+        observer.observe(chatMessages, { childList: true, subtree: true });
+    </script>
+</body>
+
+</html>
